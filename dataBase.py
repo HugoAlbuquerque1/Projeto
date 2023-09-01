@@ -1,6 +1,7 @@
 from singleton import Singleton
 import sqlite3
 
+
 class Database(Singleton):
     def iniciar(self):
         self.connection = sqlite3.connect("users.db")
@@ -21,8 +22,14 @@ class Database(Singleton):
         print("Tabela Criada Com sucesso")
         self.connection.commit
 
-    def inserir_usuario(self, new_User, new_Pass ):
-        self.cursor.execute("INSERT INTO users (user, senha) VALUES (?, ?)", (new_User, new_Pass))
+
+    def fazer_Login(self, username):
+        self.cursor.execute("SELECT user, senha FROM users WHERE user = ?", (username,))
+        result = self.cursor.fetchone()
+        return result
+
+    def inserir_usuario(self, new_User, senhaCrip ):
+        self.cursor.execute("INSERT INTO users (user, senha) VALUES (?, ?)", (new_User, senhaCrip))
         self.connection.commit()
      
     def Desconect(self):
