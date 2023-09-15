@@ -7,7 +7,7 @@ from dataBase import Database
 import atexit
 import shutil
 from tkinter import filedialog
-
+import os 
 
 
 # Função para fechar a conexão do banco de dados quando o programa for encerrado
@@ -19,6 +19,7 @@ atexit.register(close_database_connection)
 
 
 class App:
+    #Janela de login 
     def __init__(self, root):
         self.root = root
         self.root.title("Controle de Acesso")
@@ -52,7 +53,7 @@ class App:
 
         self.error_label = tk.Label(self.root, text="", fg="red",background="#D8FFDB")  # Label para exibir mensagens de erro
         self.error_label.place(relx=0.05, rely=0.75)
-
+    #função responsável em fazer o login 
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
@@ -65,10 +66,10 @@ class App:
             app_window.mainloop()
         else:
             self.show_error("Credenciais inválidas")
-
+    #Acusa erro de login
     def show_error(self, error_message):
         self.error_label.config(text=error_message)
-
+    #função responsavel por abrir a janela de cadastro 
     def open_registration(self):
         self.root.withdraw()  # Esconde a janela atual de login
         registration_window = tk.Toplevel()  # Cria uma nova janela de cadastro
@@ -76,6 +77,7 @@ class App:
         registration_window.mainloop()
 
 class RegistrationApp:
+    #janela de cadastro administrativo
     def __init__(self, root, login_window):
         self.root = root
         self.login_window = login_window  # Referência à janela de login
@@ -127,6 +129,7 @@ class RegistrationApp:
         self.error_label = tk.Label(self.root, text="", background="#D8FFDB",fg="red")  # Label para exibir mensagens de erro
         self.error_label.place(relx=0.05, rely=0.87)
 
+    #função que faz o cadastro 
     def cadastro(self):
         new_User = self.name_Entry.get()
         new_Pass = self.pass_Entry.get()
@@ -138,7 +141,7 @@ class RegistrationApp:
             self.login_window.deiconify()
         else:
             self.show_error("Credenciais inválidas")
-
+    
     def show_error(self, error_message):
         self.error_label.config(text=error_message)
 
@@ -183,7 +186,7 @@ class AppMain:
         self.cadastro_Aluno = tk.Button(self.frame_cadastro, text="Cadastro Aluno",command=self.show_Aba_Cadastro_Aluno)
         self.cadastro_Aluno.place(relx=0.15, rely=0.01)
 
-        self.image = PhotoImage(file="fotos/rato.gif")  # Substitua pelo caminho da sua imagem
+        self.image = PhotoImage(file="fotos/Santos.png")  # Substitua pelo caminho da sua imagem
         self.image_label = tk.Label(self.frame_entrada, image=self.image)
         self.image_label.place(relx=0.01, rely=0.01)
 
@@ -222,12 +225,24 @@ class AppMain:
         self.curso_entry = tk.Entry(self.frame_cadastro_A, background="white", font=("Inter", 15))
         self.curso_entry.place(relx=0.01,rely=0.40,relwidth=0.30,relheight=0.03)
 
+
+
+
+
         self.Turma_Label = tk.Label(self.frame_cadastro_A,text="Turma", background="#D6D58E",
                                    fg="#023535",font=("Inter", 20) ) 
-        self.Turma_Label.place(relx=0.01, rely=0.45)
+        self.Turma_Label.place(relx=0.01, rely=0.45,relwidth=0.25, relheight=0.03)
 
-        self.Turma_entry = tk.Entry(self.frame_cadastro_A, background="white", font=("Inter", 15))
-        self.Turma_entry.place(relx=0.01,rely=0.50,relwidth=0.30,relheight=0.03)
+        self.Turma_entry = tk.Entry(self.frame_cadastro_A, background="white", font=("Inter", 12))
+        self.Turma_entry.place(relx=0.01,rely=0.50,relwidth=0.25,relheight=0.03)
+
+        self.turno_Label = tk.Label(self.frame_cadastro_A,text="Turno", background="#D6D58E",
+                                   fg="#023535",font=("Inter", 20)) 
+        self.turno_Label.place(relx=0.25, rely=0.45,relwidth=0.25, relheight=0.03)
+
+        self.turno_entry = tk.Entry(self.frame_cadastro_A, background="white", font=("Inter", 12))
+        self.turno_entry.place(relx=0.25,rely=0.50,relwidth=0.25,relheight=0.03)
+
 
 
         self.Dadosresp_Label = tk.Label(self.frame_cadastro_A,text="Dados Responsavel", background="#023535",
@@ -282,7 +297,10 @@ class AppMain:
         self.cargo_Entry.place(relx=0.05, rely=0.25)
 
         self.botao_CadastroFuncionario = tk.Button(self.frame_cadastro_Func, text="Cadastrar")
-        self.botao_CadastroFuncionario.place(relx=0.10, rely=0.30)
+        self.botao_CadastroFuncionario.place(relx=0.35, rely=0.30)
+
+        self.botao_Foto_Func = tk.Button(self.frame_cadastro_Func, text="Foto",command=self.selecionar_Foto)
+        self.botao_Foto_Func.place(relx=0.20, rely=0.30)
 
  
 
@@ -298,14 +316,22 @@ class AppMain:
         self.show_frame(self.frame_entrada)
 
 
+    def cadastrar_Aluno(self):
+        pass
 
-    def  selecionar_Foto(self):
-        foto = filedialog.askopenfilename(filetypes=[("Image Files", "*.png, *.gif,*.jpg,*.jpeg")])
 
+    def selecionar_Foto(self):
+        foto = filedialog.askopenfilename(
+            filetypes=[
+                ("PNG Files", "*.png"),
+                ("GIF Files", "*.gif"),
+                ("JPEG Files", "*.jpg *.jpeg")
+            ]
+        )
         if foto:
-            Database_foto_folder = ("cadastro.db")
+            Database_foto_folder = ("Controle de acesso/foto")
+            os.makedirs(Database_foto_folder, exist_ok=True)
             shutil.copy(foto, Database_foto_folder)
-
 
 
 
