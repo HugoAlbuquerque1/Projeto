@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import PhotoImage
-import login  # Importando as funções do arquivo functions.py
+import login2  # Importando as funções do arquivo functions.py
 import cadastro
 from PIL import Image, ImageTk
 from dataBase import Database
@@ -8,16 +8,20 @@ import atexit
 import shutil
 from tkinter import filedialog
 import os 
+from datetime import datetime
+import databaseCad
+import qrcode
+from PIL import Image
 
 
 # Função para fechar a conexão do banco de dados quando o programa for encerrado
-def close_database_connection():
+"""def close_database_connection():
     db = Database()
     db.Desconect()
 
 atexit.register(close_database_connection)
 
-
+"""
 class App:
     #Janela de login 
     def __init__(self, root):
@@ -57,8 +61,8 @@ class App:
     def login(self):
         username = self.username_entry.get()
         password = self.password_entry.get()
-
-        if login.login(username, password): 
+        
+        if login2.login(username, password): 
             print("Login bem-sucedido!")
             self.root.destroy()  # Fecha a janela de login
             app_window = tk.Tk()  # Cria a janela principal do aplicativo
@@ -136,7 +140,7 @@ class RegistrationApp:
         new_Pass2 = self.pass2_Entry.get()
         senha_Mae2 = self.senha_Mae2.get()
 
-        if cadastro.cadastro(new_User,new_Pass,new_Pass2,senha_Mae2):
+        if cadastro.cadastro1(new_User,new_Pass,new_Pass2,senha_Mae2):
             self.root.destroy()  # Fecha a janela de cadastro
             self.login_window.deiconify()
         else:
@@ -149,6 +153,7 @@ class AppMain:
     def __init__(self, root):
         self.root = root
         self.root.title("Aplicativo Principal")  
+        self.foto = None
           
         self.frame = tk.Frame(self.root)
         self.root.configure(background='#023535')
@@ -207,7 +212,7 @@ class AppMain:
         self.data_Nascimento.place(relx=0.01,rely=0.15)
 
         self.data_Entry = tk.Entry(self.frame_cadastro_A, background="white",font=("Inter", 15))
-        self.data_Entry.place(relx=0.01,rely=0.20,relwidth=0.15,relheight=0.03)
+        self.data_Entry.place(relx=0.01,rely=0.20,relwidth=0.20,relheight=0.03)
         self.data_Entry.bind('<KeyPress>', self.on_date)
 
 
@@ -275,6 +280,9 @@ class AppMain:
         self.foto = tk.Button(self.frame_cadastro_A,text="Selecionar foto",command=self.selecionar_Foto)
         self.foto.place(relx=0.05,rely=0.90)
 
+        self.botao_CadastroAluno = tk.Button(self.frame_cadastro_A, text="Cadastrar",command=self.cadastrar_Aluno)
+        self.botao_CadastroAluno.place(relx=0.20, rely=0.90)
+
 
 
         #wigets do frame de cadastro funcionario
@@ -317,23 +325,75 @@ class AppMain:
 
 
     def cadastrar_Aluno(self):
-        pass
+        try:
+            data_Entry = self.data_Entry.get()
+            data = data_Entry.replace("/", "-")
+            idade = self.calcular_Idade(data)
+
+            nome = self.Entry_Aluno.get()
+            matricula = self.matricula_entry.get()
+            curso = self.curso_entry.get()
+            turma = self.Turma_entry.get()
+            turno = self.turno_entry.get()
+            code = self.criar_qr(matricula)
+            nomeresp = self.nomeresp_entry.get()
+            emailresp = self.email_entry.get()
+            telefoneresp = self.Telefone_entry.get()
+            foto = self.foto
+
+            # Supondo que a função cadastrar_Aluno1 pode levantar exceções
+            databaseCad.cadastrar_Aluno1(nome, idade, matricula, curso, turma, turno, code, nomeresp, emailresp, telefoneresp, foto)
+            
+            # Se chegou até aqui sem exceções, considere que o cadastro foi bem-sucedido
+            print("Cadastro realizado com sucesso!")
+        except Exception as e:
+            print(f"Erro ao cadastrar aluno: {str(e)}")
+
+
+    def criar_qr(self,matricula):
+        qr = qrcode.QRCode(
+            version=1,
+            error_correction=qrcode.constants.ERROR_CORRECT_L,
+            box_size=10,
+            border=4,
+        )
+
+        # Aqui, você fornece a matrícula como dado a ser codificado no QR code
+        qr.add_data(matricula)
+        qr.make(fit=True)
+
+        qr_code = qr.make_image(fill_color='black', back_color="white")
+
+        pasta_aluno = f"qr_codes/{matricula}"
+        if not os.path.exists(pasta_aluno):
+            os.makedirs(pasta_aluno)
+
+        caminho_arquivo = os.path.join(pasta_aluno, f"{matricula}.png")
+        qr_code.save(caminho_arquivo)
+
+        return caminho_arquivo
+
+
+    def calcular_Idade(self, data):
+        
+        data = datetime.strptime(data, '%d-%m-%Y')
+        data_atual = datetime.now()
+        idade = data_atual.year - data.year - ((data_atual.month, data_atual.day) < (data.month, data.day))
+        return idade
 
 
     def selecionar_Foto(self):
-        foto = filedialog.askopenfilename(
+        self.foto = filedialog.askopenfilename(
             filetypes=[
                 ("PNG Files", "*.png"),
                 ("GIF Files", "*.gif"),
                 ("JPEG Files", "*.jpg *.jpeg")
             ]
         )
-        if foto:
-            Database_foto_folder = ("Controle de acesso/foto")
+        if self.foto:
+            Database_foto_folder = ("fotos")
             os.makedirs(Database_foto_folder, exist_ok=True)
-            shutil.copy(foto, Database_foto_folder)
-
-
+            shutil.copy(self.foto, Database_foto_folder)
 
     def on_date(self,event):
         position = self.data_Entry.index(tk.INSERT)
